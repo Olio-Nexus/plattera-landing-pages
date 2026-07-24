@@ -1,4 +1,10 @@
+import dns from "node:dns";
 import nodemailer, { type Transporter } from "nodemailer";
+
+// Some hosts (e.g. Render) have no IPv6 route. Node 18+ resolves AAAA first,
+// so smtp.gmail.com resolves to an IPv6 address → `connect ENETUNREACH`.
+// Prefer IPv4 so the SMTP connection actually reaches the server.
+dns.setDefaultResultOrder("ipv4first");
 
 type Account = {
   host?: string;
@@ -45,6 +51,10 @@ function transporterFor(acc: Account): Transporter {
       port: acc.port,
       secure: acc.secure,
       auth: { user: acc.user, pass: acc.pass },
+      // Fail fast instead of hanging for minutes when a host is unreachable.
+      connectionTimeout: 10_000, // TCP connect
+      greetingTimeout: 10_000, // wait for SMTP greeting
+      socketTimeout: 20_000, // inactivity after connect
     });
     transporters.set(key, t);
   }
