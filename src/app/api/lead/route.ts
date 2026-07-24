@@ -1,4 +1,7 @@
-import { sendMail } from "@/lib/mail";
+// Email notifications are disabled — Render blocks outbound SMTP (ETIMEDOUT).
+// Re-enable by restoring this import + the notifyByEmail call once an HTTP
+// email provider (Resend / Gmail API) is wired in.
+// import { sendMail } from "@/lib/mail";
 
 type LeadType = "enquiry" | "brochure" | "subscribe";
 
@@ -11,6 +14,7 @@ type Body = {
   utm?: Record<string, string | undefined>;
 };
 
+/* Email disabled — kept for when an HTTP email provider is added.
 const TYPE_LABELS: Record<LeadType, string> = {
   enquiry: "Enquiry",
   brochure: "Brochure Download",
@@ -22,6 +26,7 @@ function esc(v: unknown): string {
     c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&amp;"
   );
 }
+*/
 
 // Fire the row off to the Google Apps Script web app (Google Sheets logger).
 async function forwardToSheet(payload: Body & { timestamp: string }) {
@@ -50,6 +55,7 @@ async function forwardToSheet(payload: Body & { timestamp: string }) {
   }
 }
 
+/* Email disabled — Render blocks outbound SMTP. Restore when using an HTTP provider.
 async function notifyByEmail(body: Body) {
   const f = body.fields ?? {};
   const u = body.utm ?? {};
@@ -102,6 +108,7 @@ async function notifyByEmail(body: Body) {
     </div>`,
   });
 }
+*/
 
 export async function POST(request: Request) {
   let body: Body;
@@ -129,17 +136,16 @@ export async function POST(request: Request) {
 
   const payload = { ...body, timestamp: new Date().toISOString() };
 
-  // Run both sinks; don't let one failure block the other.
-  const [sheet, email] = await Promise.allSettled([
+  // Email is disabled (Render blocks outbound SMTP) — only log to Google Sheets.
+  const [sheet] = await Promise.allSettled([
     forwardToSheet(payload),
-    notifyByEmail(body),
+    // notifyByEmail(body),
   ]);
 
   const sheetOk = sheet.status === "fulfilled" && sheet.value.ok;
-  const emailOk = email.status === "fulfilled";
-  if (email.status === "rejected") console.error("Email failed:", email.reason);
+  const emailOk = false;
 
-  if (!sheetOk && !emailOk) {
+  if (!sheetOk) {
     return Response.json({ ok: false, error: "All sinks failed" }, { status: 502 });
   }
   return Response.json({ ok: true, sheet: sheetOk, email: emailOk });
