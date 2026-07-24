@@ -120,6 +120,7 @@ export default function WomensDayCorporatePage() {
         <Hero
           highlight="Celebrate the Women"
           title="Who Drive Your Workplace Forward"
+          bgImage="/banner/women-day.png"
         >
           <EnquiryForm />
         </Hero>

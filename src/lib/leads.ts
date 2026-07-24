@@ -2,6 +2,35 @@ import { getTracking } from "./tracking";
 
 export type LeadType = "enquiry" | "brochure" | "subscribe";
 
+// Human-friendly names surfaced to GTM / GA4 in the `formName` field.
+const FORM_NAMES: Record<LeadType, string> = {
+  enquiry: "Enquiry Form",
+  brochure: "Brochure Form",
+  subscribe: "Subscribe Form",
+};
+
+declare global {
+  interface Window {
+    dataLayer?: Record<string, unknown>[];
+  }
+}
+
+/**
+ * Notify Google Tag Manager that a lead was captured.
+ * Fires ONLY after the API confirms success (see submitLead), never on click.
+ */
+function pushLeadEvent(type: LeadType, fields: LeadFields, page: string) {
+  if (typeof window === "undefined") return;
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({
+    event: "lead_form_submit",
+    formType: type,
+    formName: FORM_NAMES[type],
+    page,
+    ...fields,
+  });
+}
+
 export type LeadFields = {
   fullName?: string;
   email?: string;
@@ -34,4 +63,6 @@ export async function submitLead(input: {
   if (!res.ok) {
     throw new Error(`Lead submit failed (${res.status})`);
   }
+  // Success confirmed by the API — now (and only now) tell GTM.
+  pushLeadEvent(input.type, input.fields, tracking.page);
 }

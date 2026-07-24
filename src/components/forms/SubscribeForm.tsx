@@ -31,7 +31,7 @@ export function SubscribeForm() {
   };
 
   return (
-    <div className="mt-6 w-full">
+    <div className="mt-6 w-full max-w-sm">
       <form onSubmit={onSubmit} className="flex w-full flex-col gap-2 sm:flex-row">
         <Input
           type="email"
@@ -47,7 +47,7 @@ export function SubscribeForm() {
         <button
           type="submit"
           disabled={status === "loading"}
-          className={cn(buttonVariants(), "h-12 w-full px-6 sm:w-auto")}
+          className={cn(buttonVariants(), "h-12 self-start px-6")}
         >
           {status === "loading" ? "..." : "Subscribe"}
         </button>

@@ -25,7 +25,7 @@ function LinkedinIcon({ className }: { className?: string }) {
 export function Footer({ brandName = siteConfig.name }) {
   return (
     <footer className="mt-auto bg-[#1A1A1A] text-white">
-      <Container className="flex flex-col gap-10 py-14 md:flex-row md:items-start md:justify-between">
+      <Container className="flex flex-col gap-8 py-10 md:flex-row md:items-start md:justify-between">
         {/* Brand */}
         <div className="max-w-md">
           <span className="inline-flex rounded-lg bg-white p-2.5">
@@ -42,10 +42,13 @@ export function Footer({ brandName = siteConfig.name }) {
             Indian&apos;s design-first gifting company. We curate, customize, and
             deliver premium gifts for modern brands and thoughtful individuals.
           </p>
+
+          {/* Newsletter subscribe */}
+          <SubscribeForm />
         </div>
 
-        {/* Subscribe + social */}
-        <div className="w-full md:w-96 md:shrink-0">
+        {/* Social */}
+        <div className="md:shrink-0">
           <div className="flex flex-col gap-3 md:items-end">
             <span className="text-[15px] font-semibold text-white">Follow us</span>
             <div className="flex items-center gap-3">
@@ -73,9 +76,6 @@ export function Footer({ brandName = siteConfig.name }) {
               )}
             </div>
           </div>
-
-          {/* Newsletter subscribe */}
-          <SubscribeForm />
         </div>
       </Container>
 

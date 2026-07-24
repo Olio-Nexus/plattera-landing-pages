@@ -15,6 +15,7 @@ import {
 import { budgetOptions, occasionOptions, quantityOptions } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { submitLead } from "@/lib/leads";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type EnquiryValues = {
@@ -54,12 +55,15 @@ export function EnquiryForm({ className }: { className?: string }) {
   });
 
   const [submitError, setSubmitError] = useState(false);
+  const router = useRouter();
 
   const onSubmit = async (data: EnquiryValues) => {
     setSubmitError(false);
     try {
       await submitLead({ type: "enquiry", fields: data });
       reset();
+      // Success — send the user to the conversion page.
+      router.push("/thank-you");
     } catch {
       setSubmitError(true);
     }
@@ -69,7 +73,7 @@ export function EnquiryForm({ className }: { className?: string }) {
     <form
       onSubmit={handleSubmit(onSubmit)}
       className={cn(
-        "w-full rounded-2xl border border-black/5 bg-white p-5 shadow-xl shadow-black/5 sm:p-6 lg:p-7",
+        "w-full rounded-2xl border border-black/5 bg-white p-4 shadow-xl shadow-black/5 sm:p-6 lg:p-7",
         className
       )}
     >

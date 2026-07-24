@@ -63,16 +63,25 @@ export function Header({
           </button>
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          type="button"
-          aria-label="Toggle menu"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="grid size-10 place-items-center rounded-md text-foreground lg:hidden"
-        >
-          {open ? <X className="size-6" /> : <Menu className="size-6" />}
-        </button>
+        {/* Mobile: brochure CTA + toggle */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <button
+            type="button"
+            onClick={openBrochure}
+            className={cn(buttonVariants(), "h-9 px-3 text-[10px]")}
+          >
+            {cta.label}
+          </button>
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="grid size-10 place-items-center rounded-md text-foreground"
+          >
+            {open ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
+        </div>
       </Container>
 
       {/* Mobile menu */}
@@ -93,16 +102,6 @@ export function Header({
               {item.label}
             </SmoothLink>
           ))}
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              openBrochure();
-            }}
-            className={cn(buttonVariants(), "mt-2 h-10 w-full")}
-          >
-            {cta.label}
-          </button>
         </Container>
       </div>
     </header>

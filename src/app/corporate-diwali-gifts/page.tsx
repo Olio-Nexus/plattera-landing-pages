@@ -112,6 +112,7 @@ export default function CorporateDiwaliGiftsPage() {
         <Hero
           highlight="Celebrate Diwali"
           title="with Thoughtful Corporate Gifts"
+          bgImage="/banner/corporate-diwali-gifts.png"
         >
           <EnquiryForm />
         </Hero>

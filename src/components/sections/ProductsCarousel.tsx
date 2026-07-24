@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Container } from "@/components/layout/Container";
 import { buttonVariants } from "@/components/ui/button";
@@ -38,11 +39,14 @@ export function ProductsCarousel({
   ctaLabel?: string;
   ctaHref?: string;
 } = {}) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: "start",
-    loop: true,
-    containScroll: "trimSnaps",
-  });
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      align: "start",
+      loop: true,
+      containScroll: "trimSnaps",
+    },
+    [Autoplay({ delay: 3000, stopOnInteraction: false })]
+  );
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);

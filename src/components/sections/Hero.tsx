@@ -34,23 +34,21 @@ export function Hero({
         </h1>
       </Container>
 
-      {/* Image band + floating form */}
+      {/* Image band with the form sitting on top — image fills the whole band,
+          including behind and around the form (no white gap on mobile). */}
       <div className="relative w-full">
-        {/* Overall background image (replace via bgImage prop) */}
+        {/* Background image (replace via bgImage prop) */}
         <div
           aria-hidden
-          className="h-75 w-full bg-cover bg-center sm:h-95 lg:h-175"
+          className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url("${bgImage}")` }}
         />
 
-        {/* Form: overlaps band bottom on mobile, floats right & centered on desktop */}
-        <div className="lg:absolute lg:inset-0">
-          <Container className="lg:flex lg:h-full lg:items-center lg:justify-end lg:py-12 lg:pr-12">
-            <div className="relative z-10 mx-auto -mt-20 w-[92%] max-w-xl lg:mx-0 lg:mt-0 lg:w-165">
-              {children}
-            </div>
-          </Container>
-        </div>
+        <Container className="relative flex min-h-104 items-end justify-center px-3 pt-36 pb-6 sm:min-h-128 sm:px-6 lg:min-h-175 lg:items-center lg:justify-end lg:pt-0 lg:pb-0 lg:pr-12">
+          <div className="relative z-10 w-full max-w-xl lg:w-165">
+            {children}
+          </div>
+        </Container>
       </div>
     </section>
   );

@@ -23,6 +23,7 @@ const monaSans = Mona_Sans({
 export const metadata: Metadata = {
   title: "Plattera — Corporate Gifts",
   description: "Corporate gifts that build lasting relationships.",
+  icons: { icon: "/fav.svg" },
 };
 
 export default function RootLayout({

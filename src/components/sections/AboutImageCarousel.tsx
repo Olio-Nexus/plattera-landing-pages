@@ -23,7 +23,7 @@ export function AboutImageCarousel({
 }) {
   const SLIDES = slides;
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
-    Autoplay({ delay: 3500, stopOnInteraction: false }),
+    Autoplay({ delay: 3000, stopOnInteraction: false }),
   ]);
   const [selected, setSelected] = useState(0);
 
