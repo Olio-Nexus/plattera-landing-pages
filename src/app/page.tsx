@@ -22,7 +22,7 @@ export default function Home() {
         <Hero
           highlight="Corporate Gifts"
           title="That Build Lasting Relationships"
-          bgImage="/banner/corporate-gifiting.png"
+          bgImage="/banner/corporate-gifting.png"
         >
           <EnquiryForm />
         </Hero>

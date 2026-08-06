@@ -126,7 +126,7 @@ export default function EmployeeWelcomeKitsPage() {
         <Hero
           highlight="Professional Curated"
           title="Welcome Kits"
-          bgImage="/banner/emp-welcome-kit.png"
+          bgImage="/banner/employee-welcome-kits.png"
         >
           <EnquiryForm />
         </Hero>
