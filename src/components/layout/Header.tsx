@@ -4,9 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { Container } from "./Container";
-import { buttonVariants } from "@/components/ui/button";
 import { SmoothLink } from "@/components/ui/smooth-link";
-import { useBrochure } from "@/components/brochure/BrochureProvider";
 import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -14,15 +12,12 @@ type NavItem = { label: string; href: string };
 
 export function Header({
   nav = siteConfig.nav,
-  cta = siteConfig.cta,
   brandName = siteConfig.name,
 }: {
   nav?: NavItem[];
-  cta?: { label: string; href: string };
   brandName?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const { open: openBrochure } = useBrochure();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-black/10 bg-white shadow-sm">
@@ -52,36 +47,16 @@ export function Header({
           ))}
         </nav>
 
-        {/* Desktop CTA */}
-        <div className="hidden lg:block">
-          <button
-            type="button"
-            onClick={openBrochure}
-            className={cn(buttonVariants(), "h-10 px-5")}
-          >
-            {cta.label}
-          </button>
-        </div>
-
-        {/* Mobile: brochure CTA + toggle */}
-        <div className="flex items-center gap-2 lg:hidden">
-          <button
-            type="button"
-            onClick={openBrochure}
-            className={cn(buttonVariants(), "h-9 px-3 text-[10px]")}
-          >
-            {cta.label}
-          </button>
-          <button
-            type="button"
-            aria-label="Toggle menu"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-            className="grid size-10 place-items-center rounded-md text-foreground"
-          >
-            {open ? <X className="size-6" /> : <Menu className="size-6" />}
-          </button>
-        </div>
+        {/* Mobile toggle */}
+        <button
+          type="button"
+          aria-label="Toggle menu"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="grid size-10 place-items-center rounded-md text-foreground lg:hidden"
+        >
+          {open ? <X className="size-6" /> : <Menu className="size-6" />}
+        </button>
       </Container>
 
       {/* Mobile menu */}
