@@ -1,6 +1,10 @@
-// Leads are logged to Google Sheets and an email notification is sent.
-// Railway allows outbound SMTP (Render did not), so email is enabled.
-import { sendMail } from "@/lib/mail";
+// Landing-page lead capture.
+//
+// Leads are forwarded to the Plattera CRM (`POST /api/store/enquiries`) so they
+// land in the CRM's Leads inbox alongside the storefront's — tagged with the
+// landing page they came from. The CRM records the lead AND emails the routed
+// recipients, so this app sends no email of its own (and no longer logs to a
+// Google Sheet).
 
 type LeadType = "enquiry" | "brochure" | "subscribe";
 
@@ -13,96 +17,82 @@ type Body = {
   utm?: Record<string, string | undefined>;
 };
 
-const TYPE_LABELS: Record<LeadType, string> = {
-  enquiry: "Enquiry",
-  brochure: "Brochure Download",
-  subscribe: "Newsletter Subscribe",
+// Landing form → CRM enquiry channel. "enquiry" and "brochure" are real sales
+// leads → the CRM "quote" channel (which emails Apurva, Ashwin & contact@). A
+// newsletter signup isn't a sales lead → the CRM "newsletter" channel.
+const CRM_CHANNEL: Record<LeadType, "quote" | "newsletter"> = {
+  enquiry: "quote",
+  brochure: "quote",
+  subscribe: "newsletter",
 };
 
-function esc(v: unknown): string {
-  return String(v ?? "").replace(/[<>&]/g, (c) =>
-    c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&amp;"
-  );
+// Human label for the originating form (shown in the CRM lead + email).
+const FORM_LABEL: Record<LeadType, string> = {
+  enquiry: "Enquiry form",
+  brochure: "Brochure download",
+  subscribe: "Newsletter signup",
+};
+
+function crmBase(): string {
+  return (process.env.CRM_API_URL ?? "").replace(/\/+$/, "");
 }
 
-// Fire the row off to the Google Apps Script web app (Google Sheets logger).
-async function forwardToSheet(payload: Body & { timestamp: string }) {
-  const url = process.env.SHEETS_WEBHOOK_URL;
-  if (!url) return { ok: false, skipped: true };
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, secret: process.env.SHEETS_SECRET }),
-      redirect: "follow", // Apps Script 302-redirects to googleusercontent.com
-    });
-    // Apps Script always returns HTTP 200 — the real status is in the JSON body.
-    const text = await res.text();
-    let ok = res.ok;
-    try {
-      ok = ok && JSON.parse(text).ok === true;
-    } catch {
-      ok = false; // non-JSON (e.g. an HTML error page) means it didn't record
-    }
-    if (!ok) console.error("Sheet forward rejected:", text.slice(0, 300));
-    return { ok };
-  } catch (err) {
-    console.error("Sheet forward failed:", err);
+// Forward the lead to the CRM's public enquiries endpoint (server-to-server).
+async function forwardToCrm(body: Body): Promise<{ ok: boolean }> {
+  const base = crmBase();
+  if (!base) {
+    console.error("CRM_API_URL is not set — cannot forward lead");
     return { ok: false };
   }
-}
 
-async function notifyByEmail(body: Body) {
   const f = body.fields ?? {};
   const u = body.utm ?? {};
-  const label = TYPE_LABELS[body.type] ?? body.type;
 
-  const rows: [string, string | undefined][] = [
-    ["Type", label],
-    ["Page", body.page],
-    ["Full Name", f.fullName],
-    ["Email", f.email],
-    ["Phone", f.phone],
-    ["Quantity", f.quantity],
-    ["Occasion", f.occasion],
-    ["Budget", f.budget],
-    ["Address", f.address],
-    ["Message", f.message],
-    ["UTM Source", u.utm_source],
-    ["UTM Medium", u.utm_medium],
-    ["UTM Campaign", u.utm_campaign],
-    ["UTM Campaign Name", u.utm_campaign_name],
-    ["UTM Term", u.utm_term],
-    ["UTM Content", u.utm_content],
-    ["UTM Ad ID", u.utm_ad_id],
-    ["UTM Ad Group", u.utm_ad_group],
-    ["UTM Ad Group Name", u.utm_ad_group_name],
-    ["UTM Sitelink", u.utm_sitelink],
-    ["Full URL", body.fullUrl],
-  ];
+  // Everything beyond name/email/phone/message goes in `payload` — the CRM shows
+  // it in the lead's Details and the notification email. `source` is a machine
+  // marker (the CRM hides it from display); `landingPage`/`formType` are shown.
+  const payload: Record<string, string> = {
+    source: "Landing Page",
+    landingPage: body.page || "Landing page",
+    formType: FORM_LABEL[body.type],
+  };
+  const add = (k: string, v?: string) => {
+    if (v) payload[k] = v;
+  };
+  add("quantity", f.quantity);
+  add("occasion", f.occasion);
+  add("budget", f.budget);
+  add("address", f.address);
+  add("link", body.link);
+  add("fullUrl", body.fullUrl);
+  for (const [k, v] of Object.entries(u)) add(k, v);
 
-  const tableRows = rows
-    .filter(([, v]) => v)
-    .map(
-      ([k, v]) =>
-        `<tr><td style="padding:6px 12px;color:#666;white-space:nowrap">${esc(
-          k
-        )}</td><td style="padding:6px 12px;font-weight:600">${esc(v)}</td></tr>`
-    )
-    .join("");
-
-  await sendMail({
-    subject: `New ${label} lead${body.page ? ` — ${body.page}` : ""}`,
-    replyTo: f.email,
-    text: rows
-      .filter(([, v]) => v)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join("\n"),
-    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">
-      <h2 style="margin:0 0 12px">New ${esc(label)} lead</h2>
-      <table style="border-collapse:collapse;border:1px solid #eee">${tableRows}</table>
-    </div>`,
-  });
+  try {
+    const res = await fetch(`${base}/api/store/enquiries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: CRM_CHANNEL[body.type],
+        name: f.fullName,
+        email: f.email,
+        phone: f.phone,
+        message: f.message,
+        payload,
+      }),
+    });
+    if (!res.ok) {
+      console.error(
+        "CRM enquiry rejected:",
+        res.status,
+        (await res.text()).slice(0, 300)
+      );
+      return { ok: false };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("CRM enquiry forward failed:", err);
+    return { ok: false };
+  }
 }
 
 export async function POST(request: Request) {
@@ -129,20 +119,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const payload = { ...body, timestamp: new Date().toISOString() };
-
-  // Log to Google Sheets and send the email notification in parallel.
-  // The Sheet is the source of truth (gates the response); email is best-effort.
-  const [sheet, email] = await Promise.allSettled([
-    forwardToSheet(payload),
-    notifyByEmail(body),
-  ]);
-
-  const sheetOk = sheet.status === "fulfilled" && sheet.value.ok;
-  const emailOk = email.status === "fulfilled";
-
-  if (!sheetOk) {
-    return Response.json({ ok: false, error: "All sinks failed" }, { status: 502 });
+  const { ok } = await forwardToCrm(body);
+  if (!ok) {
+    return Response.json(
+      { ok: false, error: "Could not submit. Please try again." },
+      { status: 502 }
+    );
   }
-  return Response.json({ ok: true, sheet: sheetOk, email: emailOk });
+  return Response.json({ ok: true });
 }
