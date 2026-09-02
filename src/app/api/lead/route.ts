@@ -63,8 +63,6 @@ async function forwardToCrm(body: Body): Promise<{ ok: boolean }> {
   add("occasion", f.occasion);
   add("budget", f.budget);
   add("address", f.address);
-  add("link", body.link);
-  add("fullUrl", body.fullUrl);
   for (const [k, v] of Object.entries(u)) add(k, v);
 
   try {
