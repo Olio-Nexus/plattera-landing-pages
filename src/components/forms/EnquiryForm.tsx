@@ -15,7 +15,6 @@ import {
 import { budgetOptions, occasionOptions, quantityOptions } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { submitLead } from "@/lib/leads";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type EnquiryValues = {
@@ -55,15 +54,16 @@ export function EnquiryForm({ className }: { className?: string }) {
   });
 
   const [submitError, setSubmitError] = useState(false);
-  const router = useRouter();
 
   const onSubmit = async (data: EnquiryValues) => {
     setSubmitError(false);
     try {
       await submitLead({ type: "enquiry", fields: data });
       reset();
-      // Success — send the user to the conversion page.
-      router.push("/thank-you");
+      // Full load, with the trailing slash GTM's thank-you trigger requires.
+      // A client-side router.push does not re-run gtm.js, so the conversion
+      // tags never fire.
+      window.location.assign("/thank-you/");
     } catch {
       setSubmitError(true);
     }

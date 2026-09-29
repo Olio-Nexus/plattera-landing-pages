@@ -18,6 +18,8 @@ declare global {
 /**
  * Notify Google Tag Manager that a lead was captured.
  * Fires ONLY after the API confirms success (see submitLead), never on click.
+ * Personal fields (name, email, phone, address, message) stay out of the
+ * data layer so they are not forwarded to GA4 or Ads.
  */
 function pushLeadEvent(type: LeadType, fields: LeadFields, page: string) {
   if (typeof window === "undefined") return;
@@ -27,7 +29,9 @@ function pushLeadEvent(type: LeadType, fields: LeadFields, page: string) {
     formType: type,
     formName: FORM_NAMES[type],
     page,
-    ...fields,
+    quantity: fields.quantity,
+    occasion: fields.occasion,
+    budget: fields.budget,
   });
 }
 
